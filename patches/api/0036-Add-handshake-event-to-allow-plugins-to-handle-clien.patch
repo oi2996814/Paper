@@ -7,66 +7,56 @@ Subject: [PATCH] Add handshake event to allow plugins to handle client
 
 diff --git a/src/main/java/com/destroystokyo/paper/event/player/PlayerHandshakeEvent.java b/src/main/java/com/destroystokyo/paper/event/player/PlayerHandshakeEvent.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..a077962fa786a3291849abfa823c7f0ec4664fce
+index 0000000000000000000000000000000000000000..aea04fb357f5728195fd9c9bdcd6304a0b953c45
 --- /dev/null
 +++ b/src/main/java/com/destroystokyo/paper/event/player/PlayerHandshakeEvent.java
-@@ -0,0 +1,277 @@
+@@ -0,0 +1,257 @@
 +package com.destroystokyo.paper.event.player;
 +
++import com.google.common.base.Preconditions;
++import java.util.UUID;
 +import net.kyori.adventure.text.Component;
 +import net.kyori.adventure.text.format.NamedTextColor;
-+import org.apache.commons.lang.Validate;
-+import org.bukkit.Bukkit;
++import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 +import org.bukkit.event.Cancellable;
 +import org.bukkit.event.Event;
 +import org.bukkit.event.HandlerList;
-+
-+import java.util.UUID;
-+import org.jetbrains.annotations.NotNull;
-+import org.jetbrains.annotations.Nullable;
++import org.jetbrains.annotations.ApiStatus;
++import org.jspecify.annotations.NullMarked;
++import org.jspecify.annotations.Nullable;
 +
 +/**
 + * This event is fired during a player handshake.
-+ *
-+ * <p>If there are no listeners listening to this event, the logic default
-+ * to your server platform will be ran.</p>
++ * <p>
++ * If there are no listeners listening to this event, the logic default
++ * to your server platform will be run.
 + *
 + * <p>WARNING: TAMPERING WITH THIS EVENT CAN BE DANGEROUS</p>
 + */
++@NullMarked
 +public class PlayerHandshakeEvent extends Event implements Cancellable {
 +
-+    private static final HandlerList HANDLERS = new HandlerList();
-+    @NotNull private final String originalHandshake;
-+    @NotNull private final String originalSocketAddressHostname;
-+    private boolean cancelled;
-+    @Nullable private String serverHostname;
-+    @Nullable private String socketAddressHostname;
-+    @Nullable private UUID uniqueId;
-+    @Nullable private String propertiesJson;
++    private static final HandlerList HANDLER_LIST = new HandlerList();
++
++    private final String originalHandshake;
++    private final String originalSocketAddressHostname;
++    private @Nullable String serverHostname;
++    private @Nullable String socketAddressHostname;
++    private @Nullable UUID uniqueId;
++    private @Nullable String propertiesJson;
 +    private boolean failed;
 +    private Component failMessage = Component.text("If you wish to use IP forwarding, please enable it in your BungeeCord config as well!", NamedTextColor.YELLOW);
 +
-+    /**
-+     * Creates a new {@link PlayerHandshakeEvent}.
-+     *
-+     * @param originalHandshake the original handshake string
-+     * @param cancelled if this event is enabled
-+     *
-+     * @deprecated in favour of {@link PlayerHandshakeEvent(String, String, boolean)}
-+     */
++    private boolean cancelled;
++
 +    @Deprecated
-+    public PlayerHandshakeEvent(@NotNull String originalHandshake, boolean cancelled) {
++    @ApiStatus.Internal
++    public PlayerHandshakeEvent(final String originalHandshake, final boolean cancelled) {
 +        this(originalHandshake, "127.0.0.1", cancelled);
 +    }
 +
-+    /**
-+     * Creates a new {@link PlayerHandshakeEvent}.
-+     *
-+     * @param originalHandshake the original handshake string
-+     * @param originalSocketAddressHostname the original socket address hostname
-+     * @param cancelled if this event is enabled
-+     */
-+    public PlayerHandshakeEvent(@NotNull String originalHandshake, @NotNull String originalSocketAddressHostname, boolean cancelled) {
++    @ApiStatus.Internal
++    public PlayerHandshakeEvent(final String originalHandshake, final String originalSocketAddressHostname, final boolean cancelled) {
 +        super(true);
 +        this.originalHandshake = originalHandshake;
 +        this.originalSocketAddressHostname = originalSocketAddressHostname;
@@ -75,9 +65,9 @@ index 0000000000000000000000000000000000000000..a077962fa786a3291849abfa823c7f0e
 +
 +    /**
 +     * Determines if this event is cancelled.
-+     *
-+     * <p>When this event is cancelled, custom handshake logic will not
-+     * be processed.</p>
++     * <p>
++     * When this event is cancelled, custom handshake logic will not
++     * be processed.
 +     *
 +     * @return {@code true} if this event is cancelled, {@code false} otherwise
 +     */
@@ -88,15 +78,15 @@ index 0000000000000000000000000000000000000000..a077962fa786a3291849abfa823c7f0e
 +
 +    /**
 +     * Sets if this event is cancelled.
++     * <p>
++     * When this event is cancelled, custom handshake logic will not
++     * be processed.
 +     *
-+     * <p>When this event is cancelled, custom handshake logic will not
-+     * be processed.</p>
-+     *
-+     * @param cancelled {@code true} if this event is cancelled, {@code false} otherwise
++     * @param cancel {@code true} if this event is cancelled, {@code false} otherwise
 +     */
 +    @Override
-+    public void setCancelled(boolean cancelled) {
-+        this.cancelled = cancelled;
++    public void setCancelled(final boolean cancel) {
++        this.cancelled = cancel;
 +    }
 +
 +    /**
@@ -104,7 +94,6 @@ index 0000000000000000000000000000000000000000..a077962fa786a3291849abfa823c7f0e
 +     *
 +     * @return the original handshake string
 +     */
-+    @NotNull
 +    public String getOriginalHandshake() {
 +        return this.originalHandshake;
 +    }
@@ -117,7 +106,6 @@ index 0000000000000000000000000000000000000000..a077962fa786a3291849abfa823c7f0e
 +     *
 +     * @return the original socket address hostname
 +     */
-+    @NotNull
 +    public String getOriginalSocketAddressHostname() {
 +        return this.originalSocketAddressHostname;
 +    }
@@ -129,8 +117,7 @@ index 0000000000000000000000000000000000000000..a077962fa786a3291849abfa823c7f0e
 +     *
 +     * @return the server hostname string
 +     */
-+    @Nullable
-+    public String getServerHostname() {
++    public @Nullable String getServerHostname() {
 +        return this.serverHostname;
 +    }
 +
@@ -141,7 +128,7 @@ index 0000000000000000000000000000000000000000..a077962fa786a3291849abfa823c7f0e
 +     *
 +     * @param serverHostname the server hostname string
 +     */
-+    public void setServerHostname(@NotNull String serverHostname) {
++    public void setServerHostname(final String serverHostname) {
 +        this.serverHostname = serverHostname;
 +    }
 +
@@ -152,8 +139,7 @@ index 0000000000000000000000000000000000000000..a077962fa786a3291849abfa823c7f0e
 +     *
 +     * @return the socket address hostname string
 +     */
-+    @Nullable
-+    public String getSocketAddressHostname() {
++    public @Nullable String getSocketAddressHostname() {
 +        return this.socketAddressHostname;
 +    }
 +
@@ -164,7 +150,7 @@ index 0000000000000000000000000000000000000000..a077962fa786a3291849abfa823c7f0e
 +     *
 +     * @param socketAddressHostname the socket address hostname string
 +     */
-+    public void setSocketAddressHostname(@NotNull String socketAddressHostname) {
++    public void setSocketAddressHostname(final String socketAddressHostname) {
 +        this.socketAddressHostname = socketAddressHostname;
 +    }
 +
@@ -173,8 +159,7 @@ index 0000000000000000000000000000000000000000..a077962fa786a3291849abfa823c7f0e
 +     *
 +     * @return the unique id
 +     */
-+    @Nullable
-+    public UUID getUniqueId() {
++    public @Nullable UUID getUniqueId() {
 +        return this.uniqueId;
 +    }
 +
@@ -183,7 +168,7 @@ index 0000000000000000000000000000000000000000..a077962fa786a3291849abfa823c7f0e
 +     *
 +     * @param uniqueId the unique id
 +     */
-+    public void setUniqueId(@NotNull UUID uniqueId) {
++    public void setUniqueId(final UUID uniqueId) {
 +        this.uniqueId = uniqueId;
 +    }
 +
@@ -194,16 +179,15 @@ index 0000000000000000000000000000000000000000..a077962fa786a3291849abfa823c7f0e
 +     *
 +     * @return the profile properties, as JSON
 +     */
-+    @Nullable
-+    public String getPropertiesJson() {
++    public @Nullable String getPropertiesJson() {
 +        return this.propertiesJson;
 +    }
 +
 +    /**
 +     * Determines if authentication failed.
-+     *
-+     * <p>When {@code true}, the client connecting will be disconnected
-+     * with the {@link #getFailMessage() fail message}.</p>
++     * <p>
++     * When {@code true}, the client connecting will be disconnected
++     * with the {@link #getFailMessage() fail message}.
 +     *
 +     * @return {@code true} if authentication failed, {@code false} otherwise
 +     */
@@ -213,13 +197,13 @@ index 0000000000000000000000000000000000000000..a077962fa786a3291849abfa823c7f0e
 +
 +    /**
 +     * Sets if authentication failed and the client should be disconnected.
-+     *
-+     * <p>When {@code true}, the client connecting will be disconnected
-+     * with the {@link #getFailMessage() fail message}.</p>
++     * <p>
++     * When {@code true}, the client connecting will be disconnected
++     * with the {@link #getFailMessage() fail message}.
 +     *
 +     * @param failed {@code true} if authentication failed, {@code false} otherwise
 +     */
-+    public void setFailed(boolean failed) {
++    public void setFailed(final boolean failed) {
 +        this.failed = failed;
 +    }
 +
@@ -230,7 +214,7 @@ index 0000000000000000000000000000000000000000..a077962fa786a3291849abfa823c7f0e
 +     *
 +     * @param propertiesJson the profile properties, as JSON
 +     */
-+    public void setPropertiesJson(@NotNull String propertiesJson) {
++    public void setPropertiesJson(final String propertiesJson) {
 +        this.propertiesJson = propertiesJson;
 +    }
 +
@@ -239,7 +223,6 @@ index 0000000000000000000000000000000000000000..a077962fa786a3291849abfa823c7f0e
 +     *
 +     * @return the message to display to the client
 +     */
-+    @NotNull
 +    public Component failMessage() {
 +        return this.failMessage;
 +    }
@@ -249,7 +232,7 @@ index 0000000000000000000000000000000000000000..a077962fa786a3291849abfa823c7f0e
 +     *
 +     * @param failMessage the message to display to the client
 +     */
-+    public void failMessage(@NotNull Component failMessage) {
++    public void failMessage(final Component failMessage) {
 +        this.failMessage = failMessage;
 +    }
 +
@@ -259,10 +242,9 @@ index 0000000000000000000000000000000000000000..a077962fa786a3291849abfa823c7f0e
 +     * @return the message to display to the client
 +     * @deprecated use {@link #failMessage()}
 +     */
-+    @NotNull
 +    @Deprecated
 +    public String getFailMessage() {
-+        return Bukkit.getUnsafe().legacyComponentSerializer().serialize(this.failMessage());
++        return LegacyComponentSerializer.legacySection().serialize(this.failMessage());
 +    }
 +
 +    /**
@@ -272,19 +254,17 @@ index 0000000000000000000000000000000000000000..a077962fa786a3291849abfa823c7f0e
 +     * @deprecated use {@link #failMessage(Component)}
 +     */
 +    @Deprecated
-+    public void setFailMessage(@NotNull String failMessage) {
-+        Validate.notEmpty(failMessage, "fail message cannot be null or empty");
-+        this.failMessage(Bukkit.getUnsafe().legacyComponentSerializer().deserialize(failMessage));
++    public void setFailMessage(final String failMessage) {
++        Preconditions.checkArgument(failMessage != null && !failMessage.isEmpty(), "fail message cannot be null or empty");
++        this.failMessage(LegacyComponentSerializer.legacySection().deserialize(failMessage));
 +    }
 +
-+    @NotNull
 +    @Override
 +    public HandlerList getHandlers() {
-+        return HANDLERS;
++        return HANDLER_LIST;
 +    }
 +
-+    @NotNull
 +    public static HandlerList getHandlerList() {
-+        return HANDLERS;
++        return HANDLER_LIST;
 +    }
 +}

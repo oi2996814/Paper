@@ -1,0 +1,24 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: MeFisto94 <MeFisto94@users.noreply.github.com>
+Date: Fri, 28 Aug 2020 01:41:31 +0200
+Subject: [PATCH] Expose the Entity Counter to allow plugins to use valid and
+ non-conflicting Entity Ids
+
+
+diff --git a/src/main/java/org/bukkit/UnsafeValues.java b/src/main/java/org/bukkit/UnsafeValues.java
+index 739f117a0fd91ae98b5e5a39ae8e23feca0b741d..bd3567e9b0617c19a92090c8ab6baf17a715073a 100644
+--- a/src/main/java/org/bukkit/UnsafeValues.java
++++ b/src/main/java/org/bukkit/UnsafeValues.java
+@@ -168,5 +168,12 @@ public interface UnsafeValues {
+     byte[] serializeItem(ItemStack item);
+ 
+     ItemStack deserializeItem(byte[] data);
++
++    /**
++     * Creates and returns the next EntityId available.
++     * <p>
++     * Use this when sending custom packets, so that there are no collisions on the client or server.
++     */
++    public int nextEntityId();
+     // Paper end
+ }

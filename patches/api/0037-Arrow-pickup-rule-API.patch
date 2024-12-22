@@ -5,10 +5,10 @@ Subject: [PATCH] Arrow pickup rule API
 
 
 diff --git a/src/main/java/org/bukkit/entity/AbstractArrow.java b/src/main/java/org/bukkit/entity/AbstractArrow.java
-index 5b50a4e10e8ace8cc53ad3c8d7c3185f88d5c8db..e8e56e89e32d84af0639fe2e9b0eeabd747b6007 100644
+index 9cebf79b6217063fbce395b655261ee4ab0f4e45..c901990454ec930169b0dc561987bea101f9b6ae 100644
 --- a/src/main/java/org/bukkit/entity/AbstractArrow.java
 +++ b/src/main/java/org/bukkit/entity/AbstractArrow.java
-@@ -141,4 +141,38 @@ public interface AbstractArrow extends Projectile {
+@@ -186,4 +186,38 @@ public interface AbstractArrow extends Projectile {
           */
          CREATIVE_ONLY
      }

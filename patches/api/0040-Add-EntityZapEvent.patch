@@ -6,106 +6,98 @@ Subject: [PATCH] Add EntityZapEvent
 
 diff --git a/src/main/java/com/destroystokyo/paper/event/entity/EntityZapEvent.java b/src/main/java/com/destroystokyo/paper/event/entity/EntityZapEvent.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..3b725a489008d333630af166d2be5fc48168a6b9
+index 0000000000000000000000000000000000000000..af2b1629f845ffe1559e7d580b482636cc6441d9
 --- /dev/null
 +++ b/src/main/java/com/destroystokyo/paper/event/entity/EntityZapEvent.java
 @@ -0,0 +1,65 @@
 +package com.destroystokyo.paper.event.entity;
 +
-+import org.apache.commons.lang.Validate;
++import java.util.Collections;
 +import org.bukkit.entity.Entity;
 +import org.bukkit.entity.LightningStrike;
 +import org.bukkit.event.Cancellable;
 +import org.bukkit.event.HandlerList;
-+import org.bukkit.event.entity.EntityEvent;
 +import org.bukkit.event.entity.EntityTransformEvent;
-+
-+import java.util.Collections;
-+import org.jetbrains.annotations.NotNull;
++import org.jetbrains.annotations.ApiStatus;
++import org.jspecify.annotations.NullMarked;
 +
 +/**
-+ *  Fired when lightning strikes an entity
++ * Fired when lightning strikes an entity
 + */
++@NullMarked
 +public class EntityZapEvent extends EntityTransformEvent implements Cancellable {
-+    private static final HandlerList handlers = new HandlerList();
++
++    private static final HandlerList HANDLER_LIST = new HandlerList();
++
++    private final LightningStrike bolt;
 +    private boolean cancelled;
-+    @NotNull private final LightningStrike bolt;
 +
-+    public EntityZapEvent(@NotNull final Entity entity, @NotNull final LightningStrike bolt, @NotNull final Entity replacementEntity) {
++    @ApiStatus.Internal
++    public EntityZapEvent(final Entity entity, final LightningStrike bolt, final Entity replacementEntity) {
 +        super(entity, Collections.singletonList(replacementEntity), TransformReason.LIGHTNING);
-+        Validate.notNull(bolt);
-+        Validate.notNull(replacementEntity);
 +        this.bolt = bolt;
-+    }
-+
-+    public boolean isCancelled() {
-+        return cancelled;
-+    }
-+
-+    public void setCancelled(boolean cancel) {
-+        this.cancelled = cancel;
 +    }
 +
 +    /**
 +     * Gets the lightning bolt that is striking the entity.
++     *
 +     * @return The lightning bolt responsible for this event
 +     */
-+    @NotNull
 +    public LightningStrike getBolt() {
-+        return bolt;
++        return this.bolt;
 +    }
 +
 +    /**
 +     * Gets the entity that will replace the struck entity.
++     *
 +     * @return The entity that will replace the struck entity
 +     */
-+    @NotNull
 +    public Entity getReplacementEntity() {
-+        return getTransformedEntity();
++        return super.getTransformedEntity();
 +    }
 +
-+    @NotNull
++    @Override
++    public boolean isCancelled() {
++        return this.cancelled;
++    }
++
++    @Override
++    public void setCancelled(final boolean cancel) {
++        this.cancelled = cancel;
++    }
++
 +    @Override
 +    public HandlerList getHandlers() {
-+        return handlers;
++        return HANDLER_LIST;
 +    }
 +
-+    @NotNull
 +    public static HandlerList getHandlerList() {
-+        return handlers;
++        return HANDLER_LIST;
 +    }
 +}
 diff --git a/src/main/java/org/bukkit/event/entity/PigZapEvent.java b/src/main/java/org/bukkit/event/entity/PigZapEvent.java
-index 0e0ed93b568fd2c0d8f6e359c31dc29cb0fa71c2..d3949edfc736b3d67a627ef378748b374769e183 100644
+index c5aa91c68ec24e3d07d7cb18ac8a75c4a8f743ca..7119dc013f087be7e01fc3fedc4361f76b4edae7 100644
 --- a/src/main/java/org/bukkit/event/entity/PigZapEvent.java
 +++ b/src/main/java/org/bukkit/event/entity/PigZapEvent.java
-@@ -2,6 +2,7 @@ package org.bukkit.event.entity;
- 
- import java.util.Collections;
- import org.bukkit.entity.Entity;
-+import com.destroystokyo.paper.event.entity.EntityZapEvent;
- import org.bukkit.entity.LightningStrike;
- import org.bukkit.entity.Pig;
- import org.bukkit.entity.PigZombie;
-@@ -12,14 +13,14 @@ import org.jetbrains.annotations.NotNull;
+@@ -12,14 +12,14 @@ import org.jetbrains.annotations.NotNull;
  /**
   * Stores data for pigs being zapped
   */
 -public class PigZapEvent extends EntityTransformEvent implements Cancellable {
 -    private static final HandlerList handlers = new HandlerList();
-+public class PigZapEvent extends EntityZapEvent implements Cancellable {
-+    //private static final HandlerList handlers = new HandlerList();
++public class PigZapEvent extends com.destroystokyo.paper.event.entity.EntityZapEvent implements Cancellable { // Paper
++    // private static final HandlerList handlers = new HandlerList(); // Paper - moved in the super class
      private boolean canceled;
      private final PigZombie pigzombie;
      private final LightningStrike bolt;
  
      public PigZapEvent(@NotNull final Pig pig, @NotNull final LightningStrike bolt, @NotNull final PigZombie pigzombie) {
 -        super(pig, Collections.singletonList((Entity) pigzombie), TransformReason.LIGHTNING);
-+        super(pig, bolt, pigzombie);
++        super(pig, bolt, pigzombie); // Paper
          this.bolt = bolt;
          this.pigzombie = pigzombie;
      }
-@@ -63,6 +64,8 @@ public class PigZapEvent extends EntityTransformEvent implements Cancellable {
+@@ -63,6 +63,8 @@ public class PigZapEvent extends EntityTransformEvent implements Cancellable {
          return pigzombie;
      }
  
@@ -114,7 +106,7 @@ index 0e0ed93b568fd2c0d8f6e359c31dc29cb0fa71c2..d3949edfc736b3d67a627ef378748b37
      @NotNull
      @Override
      public HandlerList getHandlers() {
-@@ -73,4 +76,6 @@ public class PigZapEvent extends EntityTransformEvent implements Cancellable {
+@@ -73,4 +75,6 @@ public class PigZapEvent extends EntityTransformEvent implements Cancellable {
      public static HandlerList getHandlerList() {
          return handlers;
      }

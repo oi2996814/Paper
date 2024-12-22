@@ -1,0 +1,20 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Doc <nachito94@msn.com>
+Date: Fri, 15 Apr 2022 17:40:30 -0400
+Subject: [PATCH] Use username instead of display name in
+ PlayerList#getPlayerStats
+
+
+diff --git a/src/main/java/net/minecraft/server/players/PlayerList.java b/src/main/java/net/minecraft/server/players/PlayerList.java
+index 34a9e57e4fa5318ec25f1308ae1156705d688d5f..91a3b9866e02414d2d71aa53ef1fb5fdecd8cd89 100644
+--- a/src/main/java/net/minecraft/server/players/PlayerList.java
++++ b/src/main/java/net/minecraft/server/players/PlayerList.java
+@@ -1353,7 +1353,7 @@ public abstract class PlayerList {
+     // CraftBukkit start
+     public ServerStatsCounter getPlayerStats(ServerPlayer entityhuman) {
+         ServerStatsCounter serverstatisticmanager = entityhuman.getStats();
+-        return serverstatisticmanager == null ? this.getPlayerStats(entityhuman.getUUID(), entityhuman.getDisplayName().getString()) : serverstatisticmanager;
++        return serverstatisticmanager == null ? this.getPlayerStats(entityhuman.getUUID(), entityhuman.getGameProfile().getName()) : serverstatisticmanager; // Paper - use username and not display name
+     }
+ 
+     public ServerStatsCounter getPlayerStats(UUID uuid, String displayName) {

@@ -1,0 +1,320 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Jake Potrebic <jake.m.potrebic@gmail.com>
+Date: Wed, 20 Dec 2023 02:03:10 -0800
+Subject: [PATCH] Improve Registry
+
+Adds Registry#getKey(Object) which should be the
+primary way people get the key for an object. Registry
+items need to exist without having a key and so
+getKey() methods on Keyed objects that have a registry
+are marked as Deprecated or Obsolete.
+
+diff --git a/src/main/java/org/bukkit/Art.java b/src/main/java/org/bukkit/Art.java
+index d24bf449f58fd7c1b8ffab8dbc42f9f1fef8c4ef..a53e59e030aea65a99806d5b0375cbb4b7457319 100644
+--- a/src/main/java/org/bukkit/Art.java
++++ b/src/main/java/org/bukkit/Art.java
+@@ -97,6 +97,26 @@ public interface Art extends OldEnum<Art>, Keyed {
+     @Deprecated(since = "1.6.2")
+     int getId();
+ 
++    // Paper start - deprecate getKey
++    /**
++     * @deprecated use {@link Registry#getKey(Keyed)}, {@link io.papermc.paper.registry.RegistryAccess#getRegistry(io.papermc.paper.registry.RegistryKey)},
++     * and {@link io.papermc.paper.registry.RegistryKey#PAINTING_VARIANT}. Painting variants can exist without a key.
++     */
++    @Deprecated(since = "1.21", forRemoval = true)
++    @Override
++    @NotNull NamespacedKey getKey();
++
++    /**
++     * @deprecated use {@link Registry#getKey(Keyed)}, {@link io.papermc.paper.registry.RegistryAccess#getRegistry(io.papermc.paper.registry.RegistryKey)},
++     * and {@link io.papermc.paper.registry.RegistryKey#PAINTING_VARIANT}. Painting variants can exist without a key.
++     */
++    @Deprecated(since = "1.21", forRemoval = true)
++    @Override
++    default net.kyori.adventure.key.@org.jetbrains.annotations.NotNull Key key() {
++        return Keyed.super.key();
++    }
++    // Paper end - deprecate getKey
++
+     /**
+      * Get a painting by its numeric ID
+      *
+diff --git a/src/main/java/org/bukkit/MusicInstrument.java b/src/main/java/org/bukkit/MusicInstrument.java
+index 3b107e35f006cb1a0745778d99dab0783c67d4d8..d41892af5253623112fb3f8c53958c7914609e30 100644
+--- a/src/main/java/org/bukkit/MusicInstrument.java
++++ b/src/main/java/org/bukkit/MusicInstrument.java
+@@ -47,6 +47,27 @@ public abstract class MusicInstrument implements Keyed, net.kyori.adventure.tran
+         return Registry.INSTRUMENT.getOrThrow(NamespacedKey.minecraft(key));
+     }
+ 
++    // Paper start - deprecate getKey
++    /**
++     * @deprecated use {@link Registry#getKey(Keyed)}, {@link io.papermc.paper.registry.RegistryAccess#getRegistry(io.papermc.paper.registry.RegistryKey)},
++     * and {@link io.papermc.paper.registry.RegistryKey#INSTRUMENT}. MusicInstruments can exist without a key.
++     */
++    @Deprecated(forRemoval = true, since = "1.20.5")
++    @Override
++    public abstract @NotNull NamespacedKey getKey();
++
++    /**
++     * @deprecated use {@link Registry#getKey(Keyed)}, {@link io.papermc.paper.registry.RegistryAccess#getRegistry(io.papermc.paper.registry.RegistryKey)},
++     * and {@link io.papermc.paper.registry.RegistryKey#INSTRUMENT}. MusicInstruments can exist without a key.
++     */
++    @Deprecated(forRemoval = true, since = "1.20.5")
++    @Override
++    public net.kyori.adventure.key.@org.jetbrains.annotations.NotNull Key key() {
++        return Keyed.super.key();
++    }
++
++    // Paper end - deprecate getKey
++
+     // Paper start - mark translation key as deprecated
+     /**
+      * @deprecated this method assumes that the instrument description
+diff --git a/src/main/java/org/bukkit/Registry.java b/src/main/java/org/bukkit/Registry.java
+index b2bd12736d08fe72128142af4ca2022da8309f6d..c3d49f9c640eb390f507f9521a389cb7c172983a 100644
+--- a/src/main/java/org/bukkit/Registry.java
++++ b/src/main/java/org/bukkit/Registry.java
+@@ -385,6 +385,79 @@ public interface Registry<T extends Keyed> extends Iterable<T> {
+     @Nullable
+     T get(@NotNull NamespacedKey key);
+ 
++    // Paper start - improve Registry
++    /**
++     * Gets the object by its key or throws if it doesn't exist.
++     *
++     * @param key the key to get the object of in this registry
++     * @return the object for the key
++     * @throws java.util.NoSuchElementException if the key doesn't point to an object in the registry
++     */
++    default @NotNull T getOrThrow(final net.kyori.adventure.key.@NotNull Key key) {
++        final T value = this.get(key);
++        if (value == null) {
++            throw new java.util.NoSuchElementException("No value for " + key + " in " + this);
++        }
++        return value;
++    }
++
++    /**
++     * Gets the object by its key or throws if it doesn't exist.
++     *
++     * @param key the key to get the object of in this registry
++     * @return the object for the key
++     * @throws java.util.NoSuchElementException if the key doesn't point to an object in the registry
++     */
++    default @NotNull T getOrThrow(final io.papermc.paper.registry.@NotNull TypedKey<T> key) {
++        final T value = this.get(key);
++        if (value == null) {
++            throw new java.util.NoSuchElementException("No value for " + key + " in " + this);
++        }
++        return value;
++    }
++
++    /**
++     * Gets the key for this object or throws if it doesn't exist.
++     * <p>
++     * Some types can exist without being in a registry
++     * and such will have no key associated with them. This
++     * method throw an exception if it isn't in this registry.
++     *
++     * @param value the value to get the key of in this registry
++     * @return the key for the value
++     * @throws java.util.NoSuchElementException if the value doesn't exist in this registry
++     * @see #getKey(Keyed)
++     */
++    default @NotNull NamespacedKey getKeyOrThrow(final @NotNull T value) {
++        Preconditions.checkArgument(value != null, "value cannot be null");
++        final NamespacedKey key = this.getKey(value);
++        if (key == null) {
++            throw new java.util.NoSuchElementException(value + " has no key in " + this);
++        }
++        return key;
++    }
++
++    /**
++     * Get the key for this object.
++     * <p>
++     * Some types can exist without being in a registry
++     * and such will have no key associated with them. This
++     * method will return null.
++     *
++     * @param value the value to get the key of in this registry
++     * @return the key for the value or null if not in the registry
++     * @see #getKeyOrThrow(Keyed)
++     */
++    default @Nullable NamespacedKey getKey(final @NotNull T value) {
++        Preconditions.checkArgument(value != null, "value cannot be null");
++        //noinspection ConstantValue (it might not be in the future...)
++        if (value instanceof Keyed) {
++            return value.getKey();
++        }
++        return null;
++    }
++    // Paper end - improve Registry
++
+     /**
+      * Get the object by its key.
+      *
+@@ -481,5 +554,12 @@ public interface Registry<T extends Keyed> extends Iterable<T> {
+         public Class<T> getType() {
+             return this.type;
+         }
++
++        // Paper start - improve Registry
++        @Override
++        public @NotNull NamespacedKey getKey(final @NotNull T value) {
++            return value.getKey();
++        }
++        // Paper end - improve Registry
+     }
+ }
+diff --git a/src/main/java/org/bukkit/Sound.java b/src/main/java/org/bukkit/Sound.java
+index 779fd6dd572dea41e7e22464c9c6068a0fb71b9d..70d6dedcad934be38ec5dc3807ec946b0fe3b649 100644
+--- a/src/main/java/org/bukkit/Sound.java
++++ b/src/main/java/org/bukkit/Sound.java
+@@ -1704,6 +1704,16 @@ public interface Sound extends OldEnum<Sound>, Keyed, net.kyori.adventure.sound.
+         return sound;
+     }
+ 
++    // Paper start - deprecate getKey
++    /**
++     * @deprecated use {@link Registry#getKey(Keyed)} and {@link Registry#SOUNDS}. Sounds
++     * can exist without a key.
++     */
++    @Deprecated(since = "1.20.5", forRemoval = true)
++    @Override
++    @NotNull NamespacedKey getKey();
++    // Paper end - deprecate getKey
++
+     /**
+      * @return an array of all known sounds.
+      * @deprecated use {@link Registry#iterator()}.
+@@ -1715,6 +1725,11 @@ public interface Sound extends OldEnum<Sound>, Keyed, net.kyori.adventure.sound.
+     }
+ 
+     // Paper start
++    /**
++     * @deprecated use {@link Registry#getKey(Keyed)} and {@link Registry#SOUNDS}. Sounds
++     * can exist without a key.
++     */
++    @Deprecated(since = "1.20.5", forRemoval = true)
+     @Override
+     default net.kyori.adventure.key.@NotNull Key key() {
+         return this.getKey();
+diff --git a/src/main/java/org/bukkit/block/banner/PatternType.java b/src/main/java/org/bukkit/block/banner/PatternType.java
+index b6aa112ffcf43c8854e4060a83117cdc311c937d..4620b39b3257a29f964f94a2ddef9c46a365baa1 100644
+--- a/src/main/java/org/bukkit/block/banner/PatternType.java
++++ b/src/main/java/org/bukkit/block/banner/PatternType.java
+@@ -56,6 +56,23 @@ public interface PatternType extends OldEnum<PatternType>, Keyed {
+     PatternType FLOW = getType("flow");
+     PatternType GUSTER = getType("guster");
+ 
++    // Paper start - deprecate getKey
++    /**
++     * @deprecated use {@link Registry#getKey(Keyed)}, {@link io.papermc.paper.registry.RegistryAccess#getRegistry(io.papermc.paper.registry.RegistryKey)},
++     * and {@link io.papermc.paper.registry.RegistryKey#BANNER_PATTERN}. PatternTypes can exist without a key.
++     */
++    @Deprecated(since = "1.20.5", forRemoval = true)
++    @Override
++    default net.kyori.adventure.key.@org.jetbrains.annotations.NotNull Key key() {
++        return org.bukkit.Keyed.super.key();
++    }
++
++    /**
++     * @deprecated use {@link Registry#getKey(Keyed)}, {@link io.papermc.paper.registry.RegistryAccess#getRegistry(io.papermc.paper.registry.RegistryKey)},
++     * and {@link io.papermc.paper.registry.RegistryKey#BANNER_PATTERN}. PatternTypes can exist without a key.
++     */
++    @Deprecated(since = "1.20.5", forRemoval = true)
++    // Paper end - deprecate getKey
+     @Override
+     @NotNull
+     public NamespacedKey getKey();
+diff --git a/src/main/java/org/bukkit/generator/structure/Structure.java b/src/main/java/org/bukkit/generator/structure/Structure.java
+index 20a7fd27ba3a029d58dd18ad9b470ffaed8c9578..b6920f834f8f5992214734abd093af54fc01991c 100644
+--- a/src/main/java/org/bukkit/generator/structure/Structure.java
++++ b/src/main/java/org/bukkit/generator/structure/Structure.java
+@@ -61,4 +61,24 @@ public abstract class Structure implements Keyed {
+      */
+     @NotNull
+     public abstract StructureType getStructureType();
++    // Paper start - deprecate getKey
++    /**
++     * @deprecated use {@link Registry#getKey(Keyed)}, {@link io.papermc.paper.registry.RegistryAccess#getRegistry(io.papermc.paper.registry.RegistryKey)},
++     * and {@link io.papermc.paper.registry.RegistryKey#STRUCTURE}. Structures can exist without a key.
++     */
++    @Override
++    @Deprecated(since = "1.20.4", forRemoval = true)
++    public abstract @NotNull NamespacedKey getKey();
++
++    /**
++     * @deprecated use {@link Registry#getKey(Keyed)}, {@link io.papermc.paper.registry.RegistryAccess#getRegistry(io.papermc.paper.registry.RegistryKey)},
++     * and {@link io.papermc.paper.registry.RegistryKey#STRUCTURE}. Structures can exist without a key.
++     */
++    @Override
++    @Deprecated(since = "1.20.4", forRemoval = true)
++    public net.kyori.adventure.key.@org.jetbrains.annotations.NotNull Key key() {
++        return org.bukkit.Keyed.super.key();
++    }
++
++    // Paper end - deprecate getKey
+ }
+diff --git a/src/main/java/org/bukkit/inventory/meta/trim/TrimMaterial.java b/src/main/java/org/bukkit/inventory/meta/trim/TrimMaterial.java
+index cc38bee3c412bef4767f08407c0f5559a113fce5..7e8a4b4ec625072cb4aff1f9e113d9d0c162dc8c 100644
+--- a/src/main/java/org/bukkit/inventory/meta/trim/TrimMaterial.java
++++ b/src/main/java/org/bukkit/inventory/meta/trim/TrimMaterial.java
+@@ -78,4 +78,25 @@ public interface TrimMaterial extends Keyed, Translatable {
+     @Deprecated(forRemoval = true)
+     @org.jetbrains.annotations.NotNull String getTranslationKey();
+     // Paper end - adventure
++
++    // Paper start - Registry#getKey
++    /**
++     * @deprecated use {@link Registry#getKey(Keyed)}, {@link io.papermc.paper.registry.RegistryAccess#getRegistry(io.papermc.paper.registry.RegistryKey)},
++     * and {@link io.papermc.paper.registry.RegistryKey#TRIM_MATERIAL}. TrimMaterials can exist without a key.
++     */
++    @Deprecated(forRemoval = true, since = "1.20.4")
++    @Override
++    org.bukkit.@org.jetbrains.annotations.NotNull NamespacedKey getKey();
++
++    /**
++     * @deprecated use {@link Registry#getKey(Keyed)}, {@link io.papermc.paper.registry.RegistryAccess#getRegistry(io.papermc.paper.registry.RegistryKey)},
++     * and {@link io.papermc.paper.registry.RegistryKey#TRIM_MATERIAL}. TrimMaterials can exist without a key.
++     */
++    @Deprecated(forRemoval = true, since = "1.20.4")
++    @Override
++    default net.kyori.adventure.key.@org.jetbrains.annotations.NotNull Key key() {
++        return org.bukkit.Keyed.super.key();
++    }
++
++    // Paper end - Registry#getKey
+ }
+diff --git a/src/main/java/org/bukkit/inventory/meta/trim/TrimPattern.java b/src/main/java/org/bukkit/inventory/meta/trim/TrimPattern.java
+index 56cfe665daba1754e41f633d7c18172bebf87028..b2fa0d565b2492aa812b0ac036ecd74889f67f76 100644
+--- a/src/main/java/org/bukkit/inventory/meta/trim/TrimPattern.java
++++ b/src/main/java/org/bukkit/inventory/meta/trim/TrimPattern.java
+@@ -106,4 +106,24 @@ public interface TrimPattern extends Keyed, Translatable {
+     @Deprecated(forRemoval = true)
+     @org.jetbrains.annotations.NotNull String getTranslationKey();
+     // Paper end - adventure
++
++    // Paper start - Registry#getKey
++    /**
++     * @deprecated use {@link Registry#getKey(Keyed)}, {@link io.papermc.paper.registry.RegistryAccess#getRegistry(io.papermc.paper.registry.RegistryKey)},
++     * and {@link io.papermc.paper.registry.RegistryKey#TRIM_PATTERN}. TrimPatterns can exist without a key.
++     */
++    @Deprecated(forRemoval = true, since = "1.20.4")
++    @Override
++    org.bukkit.@org.jetbrains.annotations.NotNull NamespacedKey getKey();
++
++    /**
++     * @deprecated use {@link Registry#getKey(Keyed)}, {@link io.papermc.paper.registry.RegistryAccess#getRegistry(io.papermc.paper.registry.RegistryKey)},
++     * and {@link io.papermc.paper.registry.RegistryKey#TRIM_PATTERN}. TrimPatterns can exist without a key.
++     */
++    @Deprecated(forRemoval = true, since = "1.20.4")
++    @Override
++    default net.kyori.adventure.key.@org.jetbrains.annotations.NotNull Key key() {
++        return org.bukkit.Keyed.super.key();
++    }
++    // Paper end - Registry#getKey
+ }

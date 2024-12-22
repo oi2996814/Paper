@@ -5,18 +5,10 @@ Subject: [PATCH] Add String based Action Bar API
 
 
 diff --git a/src/main/java/org/bukkit/entity/Player.java b/src/main/java/org/bukkit/entity/Player.java
-index 422f322b9623dcb33472744ddfd91d7dba817471..9d9dd1f73b4c3ff143fbba87d8b5630017affd08 100644
+index cb758b5907aa0c214123550fe14ccfdacbc6b208..e014582d73fc821c0b6dcf19ae1f5dfdf510343c 100644
 --- a/src/main/java/org/bukkit/entity/Player.java
 +++ b/src/main/java/org/bukkit/entity/Player.java
-@@ -3,6 +3,7 @@ package org.bukkit.entity;
- import java.net.InetSocketAddress;
- import java.util.UUID;
- import com.destroystokyo.paper.Title; // Paper
-+import net.kyori.adventure.text.Component;
- import org.bukkit.DyeColor;
- import org.bukkit.Effect;
- import org.bukkit.GameMode;
-@@ -710,6 +711,39 @@ public interface Player extends HumanEntity, Conversable, OfflinePlayer, PluginM
+@@ -1255,6 +1255,39 @@ public interface Player extends HumanEntity, Conversable, OfflinePlayer, PluginM
      public void sendMap(@NotNull MapView map);
  
      // Paper start
@@ -27,7 +19,7 @@ index 422f322b9623dcb33472744ddfd91d7dba817471..9d9dd1f73b4c3ff143fbba87d8b56300
 +     * Use Section symbols for legacy color codes to send formatting.
 +     *
 +     * @param message The message to send
-+     * @deprecated use {@link #sendActionBar(Component)}
++     * @deprecated use {@link #sendActionBar(net.kyori.adventure.text.Component)}
 +     */
 +    @Deprecated
 +    public void sendActionBar(@NotNull String message);
@@ -39,7 +31,7 @@ index 422f322b9623dcb33472744ddfd91d7dba817471..9d9dd1f73b4c3ff143fbba87d8b56300
 +     *
 +     * @param alternateChar Alternate symbol such as '&'
 +     * @param message The message to send
-+     * @deprecated use {@link #sendActionBar(Component)}
++     * @deprecated use {@link #sendActionBar(net.kyori.adventure.text.Component)}
 +     */
 +    @Deprecated
 +    public void sendActionBar(char alternateChar, @NotNull String message);
@@ -48,7 +40,7 @@ index 422f322b9623dcb33472744ddfd91d7dba817471..9d9dd1f73b4c3ff143fbba87d8b56300
 +     * Sends an Action Bar message to the client.
 +     *
 +     * @param message The components to send
-+     * @deprecated use {@link #sendActionBar(Component)}
++     * @deprecated use {@link #sendActionBar(net.kyori.adventure.text.Component)}
 +     */
 +    @Deprecated
 +    public void sendActionBar(@NotNull net.md_5.bungee.api.chat.BaseComponent... message);
@@ -56,7 +48,7 @@ index 422f322b9623dcb33472744ddfd91d7dba817471..9d9dd1f73b4c3ff143fbba87d8b56300
      /**
       * Sends the component to the player
       *
-@@ -737,9 +771,11 @@ public interface Player extends HumanEntity, Conversable, OfflinePlayer, PluginM
+@@ -1282,9 +1315,11 @@ public interface Player extends HumanEntity, Conversable, OfflinePlayer, PluginM
      /**
       * Sends an array of components as a single message to the specified screen position of this player
       *
@@ -68,19 +60,3 @@ index 422f322b9623dcb33472744ddfd91d7dba817471..9d9dd1f73b4c3ff143fbba87d8b56300
      public default void sendMessage(net.md_5.bungee.api.ChatMessageType position, net.md_5.bungee.api.chat.BaseComponent... components) {
          spigot().sendMessage(position, components);
      }
-@@ -2216,6 +2252,7 @@ public interface Player extends HumanEntity, Conversable, OfflinePlayer, PluginM
-         /**
-          * Sends the component to the specified screen position of this player
-          *
-+         * @deprecated This is unlikely the API you want to use. See {@link #sendActionBar(String)} for a more proper Action Bar API. This deprecated API may send unsafe items to the client.
-          * @param position the screen position
-          * @param component the components to send
-          * @deprecated use {@code sendMessage} methods that accept {@link net.kyori.adventure.text.Component}
-@@ -2228,6 +2265,7 @@ public interface Player extends HumanEntity, Conversable, OfflinePlayer, PluginM
-         /**
-          * Sends an array of components as a single message to the specified screen position of this player
-          *
-+         * @deprecated This is unlikely the API you want to use. See {@link #sendActionBar(String)} for a more proper Action Bar API. This deprecated API may send unsafe items to the client.
-          * @param position the screen position
-          * @param components the components to send
-          * @deprecated use {@code sendMessage} methods that accept {@link net.kyori.adventure.text.Component}

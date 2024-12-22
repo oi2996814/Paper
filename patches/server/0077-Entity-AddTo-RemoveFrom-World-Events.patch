@@ -1,0 +1,26 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Aikar <aikar@aikar.co>
+Date: Mon, 28 Mar 2016 20:32:58 -0400
+Subject: [PATCH] Entity AddTo/RemoveFrom World Events
+
+
+diff --git a/src/main/java/net/minecraft/server/level/ServerLevel.java b/src/main/java/net/minecraft/server/level/ServerLevel.java
+index 79e3c458475ba5ce041e75d1c5d5fc345cfb2e26..c5151d833ade79b1acf1276162b061d6fce6f471 100644
+--- a/src/main/java/net/minecraft/server/level/ServerLevel.java
++++ b/src/main/java/net/minecraft/server/level/ServerLevel.java
+@@ -2209,6 +2209,7 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
+                 entity.setOrigin(entity.getOriginVector().toLocation(getWorld()));
+             }
+             // Paper end - Entity origin API
++            new com.destroystokyo.paper.event.entity.EntityAddToWorldEvent(entity.getBukkitEntity(), ServerLevel.this.getWorld()).callEvent(); // Paper - fire while valid
+         }
+ 
+         public void onTrackingEnd(Entity entity) {
+@@ -2279,6 +2280,7 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
+                 }
+             }
+             // CraftBukkit end
++            new com.destroystokyo.paper.event.entity.EntityRemoveFromWorldEvent(entity.getBukkitEntity(), ServerLevel.this.getWorld()).callEvent(); // Paper - fire while valid
+         }
+ 
+         public void onSectionChange(Entity entity) {

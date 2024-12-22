@@ -1,0 +1,26 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: BillyGalbreath <Blake.Galbreath@GMail.com>
+Date: Mon, 31 Jul 2017 01:49:43 -0500
+Subject: [PATCH] LivingEntity#setKiller
+
+
+diff --git a/src/main/java/org/bukkit/entity/LivingEntity.java b/src/main/java/org/bukkit/entity/LivingEntity.java
+index 4b75a5e1ce788bc375d6147422e5bee6ef0c03be..055ba78f61dfa2d791361ae3b74611131e95dda7 100644
+--- a/src/main/java/org/bukkit/entity/LivingEntity.java
++++ b/src/main/java/org/bukkit/entity/LivingEntity.java
+@@ -365,6 +365,15 @@ public interface LivingEntity extends Attributable, Damageable, ProjectileSource
+     @Nullable
+     public Player getKiller();
+ 
++    // Paper start
++    /**
++     * Sets the player identified as the killer of the living entity.
++     *
++     * @param killer player
++     */
++    public void setKiller(@Nullable Player killer);
++    // Paper end
++
+     /**
+      * Adds the given {@link PotionEffect} to the living entity.
+      *

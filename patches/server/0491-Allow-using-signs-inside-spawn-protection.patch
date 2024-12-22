@@ -1,0 +1,19 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Anton Lindroth <ntoonio@gmail.com>
+Date: Wed, 15 Apr 2020 01:54:02 +0200
+Subject: [PATCH] Allow using signs inside spawn protection
+
+
+diff --git a/src/main/java/net/minecraft/server/network/ServerGamePacketListenerImpl.java b/src/main/java/net/minecraft/server/network/ServerGamePacketListenerImpl.java
+index 76b6c3fca13590f057dc4767d27fef4192974147..26900978386bc97be6f224e9428fae051be6fc22 100644
+--- a/src/main/java/net/minecraft/server/network/ServerGamePacketListenerImpl.java
++++ b/src/main/java/net/minecraft/server/network/ServerGamePacketListenerImpl.java
+@@ -1827,7 +1827,7 @@ public class ServerGamePacketListenerImpl extends ServerCommonPacketListenerImpl
+                         int i = this.player.level().getMaxY();
+ 
+                         if (blockposition.getY() <= i) {
+-                            if (this.awaitingPositionFromClient == null && worldserver.mayInteract(this.player, blockposition)) {
++                        if (this.awaitingPositionFromClient == null && (worldserver.mayInteract(this.player, blockposition) || (worldserver.paperConfig().spawn.allowUsingSignsInsideSpawnProtection && worldserver.getBlockState(blockposition).getBlock() instanceof net.minecraft.world.level.block.SignBlock))) { // Paper - Allow using signs inside spawn protection
+                                 this.player.stopUsingItem(); // CraftBukkit - SPIGOT-4706
+                                 InteractionResult enuminteractionresult = this.player.gameMode.useItemOn(this.player, worldserver, itemstack, enumhand, movingobjectpositionblock);
+ 

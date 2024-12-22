@@ -1,0 +1,50 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: kashike <kashike@vq.lc>
+Date: Mon, 29 Feb 2016 19:48:59 -0600
+Subject: [PATCH] Expose server CommandMap
+
+
+diff --git a/src/main/java/org/bukkit/Bukkit.java b/src/main/java/org/bukkit/Bukkit.java
+index 75e0c5b884363be03876103e0d66e67de03c4856..81b3800e86bcd20b47df13e9c9ef3a83abfcb7c6 100644
+--- a/src/main/java/org/bukkit/Bukkit.java
++++ b/src/main/java/org/bukkit/Bukkit.java
+@@ -2361,6 +2361,19 @@ public final class Bukkit {
+         return server.getUnsafe();
+     }
+ 
++
++    // Paper start
++    /**
++     * Gets the active {@link org.bukkit.command.CommandMap}
++     *
++     * @return the active command map
++     */
++    @NotNull
++    public static org.bukkit.command.CommandMap getCommandMap() {
++        return server.getCommandMap();
++    }
++    // Paper end
++
+     @NotNull
+     public static Server.Spigot spigot() {
+         return server.spigot();
+diff --git a/src/main/java/org/bukkit/Server.java b/src/main/java/org/bukkit/Server.java
+index 2ed640d5a0027f7a94a5cf4555741c27c9b1b3a4..1b18d3916f3972675d9371ec5c6e020d70a723f6 100644
+--- a/src/main/java/org/bukkit/Server.java
++++ b/src/main/java/org/bukkit/Server.java
+@@ -1835,6 +1835,15 @@ public interface Server extends PluginMessageRecipient, net.kyori.adventure.audi
+     public double[] getTPS();
+     // Paper end
+ 
++    // Paper start
++    /**
++     * Gets the active {@link org.bukkit.command.CommandMap}
++     *
++     * @return the active command map
++     */
++    @NotNull
++    org.bukkit.command.CommandMap getCommandMap();
++
+     /**
+      * Get the advancement specified by this key.
+      *

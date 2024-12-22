@@ -6,40 +6,40 @@ Subject: [PATCH] Avoid blocking on Network Manager creation
 Per Paper issue 294
 
 diff --git a/src/main/java/net/minecraft/server/network/ServerConnectionListener.java b/src/main/java/net/minecraft/server/network/ServerConnectionListener.java
-index 4a392a95b6fc3cb4d4186bdc0632d10d1a90b9b1..526e07d8ea21af42c271bee4da5bccd766227006 100644
+index 2cf3e79ec5e8706b71d27ebad4668773f0b91195..64119f2188f8958b8a5913fec82ac5bba1b74b2a 100644
 --- a/src/main/java/net/minecraft/server/network/ServerConnectionListener.java
 +++ b/src/main/java/net/minecraft/server/network/ServerConnectionListener.java
 @@ -61,6 +61,15 @@ public class ServerConnectionListener {
      public volatile boolean running;
      private final List<ChannelFuture> channels = Collections.synchronizedList(Lists.newArrayList());
      final List<Connection> connections = Collections.synchronizedList(Lists.newArrayList());
-+    // Paper start - prevent blocking on adding a new network manager while the server is ticking
++    // Paper start - prevent blocking on adding a new connection while the server is ticking
 +    private final java.util.Queue<Connection> pending = new java.util.concurrent.ConcurrentLinkedQueue<>();
 +    private final void addPending() {
-+        Connection manager = null;
-+        while ((manager = pending.poll()) != null) {
-+            connections.add(manager);
++        Connection connection;
++        while ((connection = pending.poll()) != null) {
++            connections.add(connection);
 +        }
 +    }
-+    // Paper end
++    // Paper end - prevent blocking on adding a new connection while the server is ticking
  
      public ServerConnectionListener(MinecraftServer server) {
          this.server = server;
-@@ -96,7 +105,8 @@ public class ServerConnectionListener {
+@@ -102,7 +111,8 @@ public class ServerConnectionListener {
                      int j = ServerConnectionListener.this.server.getRateLimitPacketsPerSecond();
-                     Object object = j > 0 ? new RateKickingConnection(j) : new Connection(PacketFlow.SERVERBOUND);
+                     Connection object = j > 0 ? new RateKickingConnection(j) : new Connection(PacketFlow.SERVERBOUND); // CraftBukkit - decompile error
  
--                    ServerConnectionListener.this.connections.add((Connection) object); // CraftBukkit - decompile error
-+                    // ServerConnectionListener.this.connections.add((Connection) object); // CraftBukkit - decompile error
-+                    pending.add((Connection) object); // Paper
-                     channel.pipeline().addLast("packet_handler", (ChannelHandler) object);
-                     ((Connection) object).setListener(new ServerHandshakePacketListenerImpl(ServerConnectionListener.this.server, (Connection) object));
+-                    ServerConnectionListener.this.connections.add(object);
++                    //ServerConnectionListener.this.connections.add(object); // Paper
++                    pending.add(object); // Paper - prevent blocking on adding a new connection while the server is ticking
+                     ((Connection) object).configurePacketHandler(channelpipeline);
+                     ((Connection) object).setListenerForServerboundHandshake(new ServerHandshakePacketListenerImpl(ServerConnectionListener.this.server, (Connection) object));
                  }
-@@ -155,6 +165,7 @@ public class ServerConnectionListener {
+@@ -164,6 +174,7 @@ public class ServerConnectionListener {
  
          synchronized (this.connections) {
              // Spigot Start
-+            this.addPending(); // Paper
++            this.addPending(); // Paper - prevent blocking on adding a new connection while the server is ticking
              // This prevents players from 'gaming' the server, and strategically relogging to increase their position in the tick order
              if ( org.spigotmc.SpigotConfig.playerShuffle > 0 && MinecraftServer.currentTick % org.spigotmc.SpigotConfig.playerShuffle == 0 )
              {

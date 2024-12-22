@@ -5,15 +5,14 @@ Subject: [PATCH] Don't lookup game profiles that have no UUID and no name
 
 
 diff --git a/src/main/java/net/minecraft/server/players/GameProfileCache.java b/src/main/java/net/minecraft/server/players/GameProfileCache.java
-index e8515f4ed1f29ba926bc4ab6d918722aee450ac2..6914ab77fc868844c391ac41ba2d344a26012208 100644
+index 197e2ec9f1445a8184d0dde0e9b02b39e3302b91..22ed1e67ccb358655fe74cd1b1e19415f4e5bdd7 100644
 --- a/src/main/java/net/minecraft/server/players/GameProfileCache.java
 +++ b/src/main/java/net/minecraft/server/players/GameProfileCache.java
-@@ -101,7 +101,7 @@ public class GameProfileCache {
-         repository.findProfilesByNames(new String[]{name}, Agent.MINECRAFT, profilelookupcallback);
-         GameProfile gameprofile = (GameProfile) atomicreference.get();
+@@ -89,6 +89,7 @@ public class GameProfileCache {
+                 }
+             };
  
--        if (!GameProfileCache.usesAuthentication() && gameprofile == null) {
-+        if (!GameProfileCache.usesAuthentication() && gameprofile == null && !org.apache.commons.lang3.StringUtils.isBlank(name)) { // Paper - Don't lookup a profile with a blank name
-             UUID uuid = Player.createPlayerUUID(new GameProfile((UUID) null, name));
++        if (!org.apache.commons.lang3.StringUtils.isBlank(name)) // Paper - Don't lookup a profile with a blank name
+             repository.findProfilesByNames(new String[]{name}, profilelookupcallback);
+             GameProfile gameprofile = (GameProfile) atomicreference.get();
  
-             return Optional.of(new GameProfile(uuid, name));

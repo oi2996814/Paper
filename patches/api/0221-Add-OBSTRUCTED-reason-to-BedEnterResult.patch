@@ -1,0 +1,23 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Jake Potrebic <jake.m.potrebic@gmail.com>
+Date: Thu, 24 Dec 2020 12:43:30 -0800
+Subject: [PATCH] Add OBSTRUCTED reason to BedEnterResult
+
+
+diff --git a/src/main/java/org/bukkit/event/player/PlayerBedEnterEvent.java b/src/main/java/org/bukkit/event/player/PlayerBedEnterEvent.java
+index 567e331f6c0e403cac1d6a7c2d86ed0cd540ca7d..dad760bbbcc7dd25143e0267318a6820f1d60a73 100644
+--- a/src/main/java/org/bukkit/event/player/PlayerBedEnterEvent.java
++++ b/src/main/java/org/bukkit/event/player/PlayerBedEnterEvent.java
+@@ -42,6 +42,12 @@ public class PlayerBedEnterEvent extends PlayerEvent implements Cancellable {
+          * Entering the bed is prevented due to the player being too far away.
+          */
+         TOO_FAR_AWAY,
++        // Paper start
++        /**
++         * Bed was obstructed.
++         */
++        OBSTRUCTED,
++        // Paper end
+         /**
+          * Entering the bed is prevented due to there being monsters nearby.
+          */

@@ -1,0 +1,62 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: William Blake Galbreath <Blake.Galbreath@GMail.com>
+Date: Sun, 5 Apr 2020 22:22:58 -0500
+Subject: [PATCH] Add tick times API
+
+
+diff --git a/src/main/java/org/bukkit/Bukkit.java b/src/main/java/org/bukkit/Bukkit.java
+index f16f0a72a7b533106e1703197e370d67e13d77a3..2e44d7e90015d713b952f49f06d3ba7744d1eb42 100644
+--- a/src/main/java/org/bukkit/Bukkit.java
++++ b/src/main/java/org/bukkit/Bukkit.java
+@@ -2218,6 +2218,25 @@ public final class Bukkit {
+     public static double[] getTPS() {
+         return server.getTPS();
+     }
++
++    /**
++     * Get a sample of the servers last tick times (in nanos)
++     *
++     * @return A sample of the servers last tick times (in nanos)
++     */
++    @NotNull
++    public static long[] getTickTimes() {
++        return server.getTickTimes();
++    }
++
++    /**
++     * Get the average tick time (in millis)
++     *
++     * @return Average tick time (in millis)
++     */
++    public static double getAverageTickTime() {
++        return server == null ? 0D : server.getAverageTickTime();
++    }
+     // Paper end
+ 
+     /**
+diff --git a/src/main/java/org/bukkit/Server.java b/src/main/java/org/bukkit/Server.java
+index b8f1ecb16e3e1d969873f99f3b029d9a12437bd9..6d4f181be4000803392a59d3a9314c1d70be7533 100644
+--- a/src/main/java/org/bukkit/Server.java
++++ b/src/main/java/org/bukkit/Server.java
+@@ -1877,6 +1877,21 @@ public interface Server extends PluginMessageRecipient, net.kyori.adventure.audi
+      */
+     @NotNull
+     public double[] getTPS();
++
++    /**
++     * Get a sample of the servers last tick times (in nanos)
++     *
++     * @return A sample of the servers last tick times (in nanos)
++     */
++    @NotNull
++    long[] getTickTimes();
++
++    /**
++     * Get the average tick time (in millis)
++     *
++     * @return Average tick time (in millis)
++     */
++    double getAverageTickTime();
+     // Paper end
+ 
+     // Paper start
